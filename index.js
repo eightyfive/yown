@@ -6,6 +6,7 @@ const fs = require("fs-extra");
 const zip = require("jszip");
 const path = require("path");
 const request = require("request-promise-native");
+const info = require("./package.json");
 
 const commands = {
 	async add(handle, cmd) {
@@ -19,10 +20,7 @@ const commands = {
 		let body;
 
 		try {
-			body = await request.get({
-				url,
-				encoding: null
-			});
+			body = await request.get({ url, encoding: null });
 		} catch (err) {
 			console.error(`\nError downloading file`.red);
 			process.exit(1);
@@ -63,7 +61,7 @@ const commands = {
 };
 
 commander
-	.version("0.0.1")
+	.version(info.version)
 	.command("add <handle>")
 	.option("-d, --dest [folder]", "Specify destination folder", "src")
 	.option("-b, --branch [name]", "Specify git branch to download", "master")
