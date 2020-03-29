@@ -135,7 +135,7 @@ const commands = {
     log(" ");
 
     if (copied) {
-      log("C ".green + "= Copied");
+      log("C ".green + cmd.force ? "= Copied" : "= Copy");
     }
 
     if (forced) {
@@ -143,7 +143,7 @@ const commands = {
     }
 
     if (skipped) {
-      log("S ".white + "= Skipped");
+      log("S ".white + cmd.force ? "= Skipped" : "= Skip");
     }
 
     if (!cmd.force) {
