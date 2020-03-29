@@ -66,6 +66,10 @@ const commands = {
     const files = Object.values(archive.files);
     const logs = [];
 
+    let copied = false;
+    let skipped = false;
+    let forced = false;
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const filepath = getFilepath(file);
@@ -80,9 +84,11 @@ const commands = {
 
       if (!cmd.force) {
         if (exists) {
-          logs.push(filepath.grey + " skip".white);
+          skipped = true;
+          logs.push("S ".white + filepath.grey);
         } else {
-          logs.push(filepath.grey + " copy".green);
+          copied = true;
+          logs.push("C ".green + filepath.grey);
         }
 
         continue;
@@ -95,14 +101,15 @@ const commands = {
         const { confirmed } = await prompt({
           type: "confirm",
           name: "confirmed",
-          message: `Replace ${filepath.grey} ?`
+          message: `Replace ${filepath.grey}?`
         });
 
         overwrite = confirmed;
       }
 
       if (!overwrite) {
-        logs.push(filepath.grey + " skipped".white);
+        skipped = true;
+        logs.push("S ".white + filepath.grey);
 
         continue;
       }
@@ -113,20 +120,39 @@ const commands = {
       await fs.outputFile(filepath, buff);
 
       if (exists) {
-        logs.push(filepath.grey + " replaced".red);
+        forced = true;
+        logs.push("F ".red + filepath.grey);
       } else {
-        logs.push(filepath.grey + " copied".green);
+        copied = true;
+        logs.push("C ".green + filepath.grey);
       }
     }
 
     if (cmd.force) {
       log(" ");
     } else {
-      log("\nDRY RUN".green);
-      log("Use --force to copy files\n");
+      log("DRY RUN".green);
     }
 
     logs.forEach(txt => log(txt));
+
+    log(" ");
+
+    if (copied) {
+      log("C ".green + "= Copied");
+    }
+
+    if (forced) {
+      log("F ".red + "= Copied (Forced)");
+    }
+
+    if (skipped) {
+      log("S ".white + "= Skipped");
+    }
+
+    if (!cmd.force) {
+      log("\nUse --force to copy files");
+    }
   }
 };
 
