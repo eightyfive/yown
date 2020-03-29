@@ -9,10 +9,6 @@ const request = require("request-promise-native");
 const info = require("./package.json");
 const { prompt } = require("enquirer");
 
-// const url = `${apiUrl}/${id}/archive/${
-//       cmd.tag || cmd.branch
-//     }.zip`;
-
 const log = console.log;
 const logError = console.error;
 
@@ -37,7 +33,7 @@ const commands = {
     try {
       data = await request.get({
         url,
-        headers: { "User-Agent": "eightyfive" },
+        headers: { "User-Agent": "yown" },
         json: true
       });
     } catch (err) {
