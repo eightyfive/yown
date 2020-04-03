@@ -4,7 +4,7 @@ const colors = require("colors");
 const commander = require("commander");
 const fs = require("fs-extra");
 const zip = require("jszip");
-const path = require("path");
+const trim = require("lodash.trim");
 const request = require("request-promise-native");
 const info = require("./package.json");
 const { prompt } = require("enquirer");
@@ -56,98 +56,119 @@ const commands = {
       process.exit(1);
     }
 
+    // Unzip
     log(`\nUnzipping gist archive...\n`.blue);
 
     const archive = await zip.loadAsync(data);
-    const files = Object.values(archive.files);
-    const logs = [];
 
-    let copied = false;
-    let skipped = false;
-    let forced = false;
+    // Map filepaths to files
+    const files = {};
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const filepath = getFilepath(file);
+    Object.values(archive.files).forEach((file) => {
+      files[getFilepath(file)] = file;
+    });
+
+    // Config
+    const config = { dir: "" };
+    const configFile = files["yown.json"];
+
+    if (configFile) {
+      Object.assign(config, JSON.parse(await configFile.async("string")));
+    }
+
+    if (config.dir) {
+      log("Config detected...".blue);
+      log("`config.dir`".grey, config.dir.white);
+    }
+
+    // Import files
+    const logs = { copy: [], skip: [], force: [] };
+
+    for (let filepath in files) {
+      const file = files[filepath];
 
       // Filter
       if (file.dir || filepath === "yown.json") {
         continue;
       }
 
-      // Exists ?
-      const exists = await fs.pathExists(filepath);
+      // Build full filepath (with `dir`)
+      let fullpath = [trim(filepath, "/")];
+
+      if (config.dir) {
+        fullpath.unshift(trim(config.dir, "/"));
+      }
+
+      fullpath = `./${fullpath.join("/")}`;
+
+      // File already exists ?
+      const exists = await fs.pathExists(fullpath);
 
       if (cmd.dryRun) {
         if (exists) {
-          skipped = true;
-          logs.push("S ".white + filepath.grey);
+          logs.skip.push("S ".white + fullpath.grey);
         } else {
-          copied = true;
-          logs.push("C ".green + filepath.grey);
+          logs.copy.push("C ".green + fullpath.grey);
         }
 
         continue;
       }
 
-      // Overwrite ?
+      // Overwrite file ?
       let overwrite = !exists || cmd.force;
 
       if (!overwrite) {
         const { confirmed } = await prompt({
           type: "confirm",
           name: "confirmed",
-          message: `overwrite ${filepath.grey}?`,
+          message: `overwrite ${fullpath.grey}?`,
         });
 
         overwrite = confirmed;
       }
 
       if (!overwrite) {
-        skipped = true;
-        logs.push("S ".white + filepath.grey);
+        logs.skip.push("S ".white + fullpath.grey);
 
         continue;
       }
 
-      // Copy
+      // Copy file
       const buff = await file.async("nodebuffer");
 
-      await fs.outputFile(filepath, buff);
+      await fs.outputFile(fullpath, buff);
 
       if (exists) {
-        forced = true;
-        logs.push("F ".red + filepath.grey);
+        logs.force.push("F ".red + fullpath.grey);
       } else {
-        copied = true;
-        logs.push("C ".green + filepath.grey);
+        logs.copy.push("C ".green + fullpath.grey);
       }
     }
 
-    if (cmd.dryRun) {
-      log("DRY RUN".green);
-    } else {
-      log(" ");
-    }
+    // Log results
+    log(" ");
 
-    logs.forEach((txt) => log(txt));
+    Object.values(logs)
+      .flat()
+      .forEach((txt) => log(txt));
 
     log(" ");
 
-    if (copied) {
+    if (logs.copy.length) {
       log("C ".green + (cmd.dryRun ? "= Copy" : "= Copied"));
     }
 
-    if (forced) {
+    if (logs.force.length) {
       log("F ".red + "= Copied (Forced)");
     }
 
-    if (skipped) {
+    if (logs.skip.length) {
       log("S ".white + (cmd.dryRun ? "= Skip" : "= Skipped"));
     }
 
     if (cmd.dryRun) {
-      log("\nUse --force to copy files");
+      log("\nDRY RUN".green);
+      log("Use --force to copy files");
     }
   },
 };
