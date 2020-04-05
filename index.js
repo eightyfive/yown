@@ -1,23 +1,26 @@
 #!/usr/bin/env node
-const commander = require("commander");
+const { program } = require("commander");
 
 const info = require("./package.json");
 const commands = require("./commands");
 
-commander
-  .version(info.version)
+program.version(info.version);
+
+program
   .command("install")
   .option("-d, --dry-run", "Dry run (nothing copied)")
   .option("-f, --force", "Force copy when file exists (overwrite)")
-  .action(commands.install)
+  .action(commands.install);
+
+program
   .command("add <id>")
   .option("-d, --dry-run", "Dry run (nothing copied)")
   .option("-f, --force", "Force copy when file exists (overwrite)")
   .action(commands.add);
 
 if (!process.argv.slice(2).length) {
-  commander.outputHelp();
+  program.outputHelp();
   process.exit(1);
 }
 
-commander.parse(process.argv);
+program.parse(process.argv);
