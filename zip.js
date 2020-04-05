@@ -5,17 +5,15 @@ function buildFilesMap(folder) {
 
   Object.values(folder.files).forEach((file) => {
     if (!file.dir) {
-      files[getFilepath(file)] = file;
+      files[getFilename(file)] = file;
     }
   });
 
   return files;
 }
 
-function getFilepath(file) {
-  const filename = file.name.split("/").pop();
-
-  return filename.replace(/\\/g, "/");
+function getFilename(file) {
+  return file.name.split("/").pop();
 }
 
 module.exports = {

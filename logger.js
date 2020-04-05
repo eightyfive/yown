@@ -1,6 +1,7 @@
 const colors = require("colors");
 
 const session = {
+  appended: [],
   copied: [],
   skipped: [],
   forced: [],
@@ -10,6 +11,9 @@ const log = console.log;
 const logError = console.error;
 
 module.exports = {
+  append(filepath) {
+    session.appended.push("A ".yellow + filepath.grey);
+  },
   copy(filepath) {
     session.copied.push("C ".green + filepath.grey);
   },
@@ -44,6 +48,10 @@ module.exports = {
       .forEach((txt) => log(txt));
 
     log(" ");
+
+    if (session.appended.length) {
+      log("A ".yellow + (dryRun ? "= Append" : "= Appended"));
+    }
 
     if (session.copied.length) {
       log("C ".green + (dryRun ? "= Copy" : "= Copied"));

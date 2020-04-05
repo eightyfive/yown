@@ -1,5 +1,7 @@
 const trim = require("lodash.trim");
 
+const reAppend = /^([\w-]+)_\.([a-z]{2,4})$/;
+
 module.exports = {
   getConfig(files) {
     const config = { dir: "" };
@@ -14,13 +16,28 @@ module.exports = {
     return Promise.resolve(config);
   },
 
-  getFullpath(filepath, dir) {
-    let fullpath = [trim(filepath, "/")];
+  isAppend(filename) {
+    return reAppend.test(filename);
+  },
 
-    if (dir) {
-      fullpath.unshift(trim(dir, "/"));
+  getFilepath(dir, raw) {
+    let filepath = raw.split("\\");
+    let filename = filepath.pop();
+
+    const [, name, ext] = reAppend.exec(filename) || [];
+
+    if (name && ext) {
+      filename = `${name}.${ext}`;
     }
 
-    return `./${fullpath.join("/")}`;
+    filepath.push(filename);
+
+    const dirName = trim(dir, "./");
+
+    if (dirName) {
+      filepath.unshift(dirName);
+    }
+
+    return `./${filepath.join("/")}`;
   },
 };

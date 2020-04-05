@@ -1,21 +1,22 @@
 #!/usr/bin/env node
-const { program } = require("commander");
+const { program } = require('commander');
 
-const info = require("./package.json");
-const commands = require("./commands");
+const info = require('./package.json');
+const commands = require('./commands');
 
 program.version(info.version);
 
 program
-  .command("install")
-  .option("-d, --dry-run", "Dry run (nothing copied)")
-  .option("-f, --force", "Force copy when file exists (overwrite)")
+  .command('install')
+  .option('-d, --dry-run', 'Dry run (nothing copied)')
+  .option('-f, --force', 'Force copy when file exists (overwrite)')
   .action(commands.install);
 
 program
-  .command("add <id>")
-  .option("-d, --dry-run", "Dry run (nothing copied)")
-  .option("-f, --force", "Force copy when file exists (overwrite)")
+  .command('add <id>')
+  .option('-d, --dry-run', 'Dry run (nothing copied)')
+  .option('-f, --force', 'Force copy when file exists (overwrite)')
+  .option('-q, --double-quote', 'If you use double quotes locally')
   .action(commands.add);
 
 if (!process.argv.slice(2).length) {

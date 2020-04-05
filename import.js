@@ -7,7 +7,7 @@ const Log = require("./logger");
 const Utils = require("./utils");
 const Zip = require("./zip");
 
-module.exports = async function copy(ids, cmd) {
+module.exports = async function importGists(ids, cmd) {
   const archives = await Github.getGists(ids).catch((err) =>
     Log.die("Error downloading archive", err)
   );
@@ -16,65 +16,76 @@ module.exports = async function copy(ids, cmd) {
   const folders = await Zip.unzip(archives);
 
   for (let files of folders) {
-    await copyFiles(files, cmd);
+    await importFiles(files, cmd);
   }
 
   // Log results
   Log.session(cmd.dryRun);
 };
 
-async function copyFiles(files, cmd) {
+async function importFiles(files, cmd) {
   // Config
   const config = await Utils.getConfig(files);
 
   // Import files
-  for (let filepath in files) {
+  for (let filename in files) {
     // Filter
-    if (filepath === "yown.json") {
+    if (filename === "yown.json") {
       continue;
     }
 
-    // Build full filepath (with `dir`)
-    const fullpath = Utils.getFullpath(filepath, config.dir);
+    const filepath = Utils.getFilepath(config.dir, filename);
+    const append = Utils.isAppend(filename);
 
     // File already exists ?
-    const exists = await File.exists(fullpath);
+    const exists = await File.exists(filepath);
 
     if (cmd.dryRun) {
-      if (exists) {
-        Log.skip(fullpath);
+      if (append) {
+        Log.append(filepath);
+      } else if (exists) {
+        Log.skip(filepath);
       } else {
-        Log.copy(fullpath);
+        Log.copy(filepath);
       }
 
       continue;
     }
 
     // Overwrite file ?
-    let overwrite = !exists || cmd.force;
+    let overwrite = !exists || append || cmd.force;
 
     if (!overwrite) {
       const { confirmed } = await prompt({
         type: "confirm",
         name: "confirmed",
-        message: `overwrite ${fullpath.grey}?`,
+        message: `overwrite ${filepath.grey}?`,
       });
 
       overwrite = confirmed;
     }
 
     if (!overwrite) {
-      Log.skip(fullpath);
+      Log.skip(filepath);
       continue;
     }
 
-    // Copy file
-    await File.copy(files[filepath], fullpath);
+    const file = files[filename];
 
-    if (exists) {
-      Log.force(fullpath);
+    if (append) {
+      // Append to file
+      await File.append(file, filepath);
     } else {
-      Log.copy(fullpath);
+      // Copy file
+      await File.copy(file, filepath);
+    }
+
+    if (append) {
+      Log.append(filepath);
+    } else if (exists) {
+      Log.force(filepath);
+    } else {
+      Log.copy(filepath);
     }
   }
 }
