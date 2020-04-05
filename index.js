@@ -6,6 +6,10 @@ const commands = require("./commands");
 
 commander
   .version(info.version)
+  .command("install")
+  .option("-d, --dry-run", "Dry run (nothing copied)")
+  .option("-f, --force", "Force copy when file exists (overwrite)")
+  .action(commands.install)
   .command("add <id>")
   .option("-d, --dry-run", "Dry run (nothing copied)")
   .option("-f, --force", "Force copy when file exists (overwrite)")
