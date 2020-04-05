@@ -9,29 +9,20 @@ const Zip = require("../zip");
 
 module.exports = async function add(id, cmd) {
   // Get gist
-  Log.info("Fetching gist...");
+  Log.info("Fetching Gist archive...");
 
-  let data;
-
-  try {
-    data = await Github.getGist(id);
-  } catch (err) {
-    Log.die("Error fetching Gist", err);
-  }
-
-  // Download gist zip
-  Log.info("Downloading archive...");
+  let archive;
 
   try {
-    data = await Github.getGistArchive(data);
+    [archive] = await Github.getGists([id]);
   } catch (err) {
-    Log.die("Error downloading archive", err);
+    Log.die("Error", err);
   }
 
   // Unzip
   Log.info("Unzipping archive...");
 
-  const files = await Zip.unzip(data);
+  const files = await Zip.unzip(archive);
 
   // Config
   const config = await Utils.getConfig(files);
