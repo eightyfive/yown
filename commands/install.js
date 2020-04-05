@@ -3,7 +3,9 @@
 const File = require("../file");
 const Log = require("../logger");
 
-module.exports = async function install(id, cmd) {
+const add = require("./add");
+
+module.exports = async function install(cmd) {
   const exists = await File.exists("./yown.json");
 
   if (!exists) {
@@ -12,5 +14,7 @@ module.exports = async function install(id, cmd) {
 
   const ids = await File.json("./yown.json");
 
-  console.log(ids);
+  for (let id of ids) {
+    await add(id, cmd);
+  }
 };
