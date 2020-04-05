@@ -1,9 +1,9 @@
 const zip = require("jszip");
 
-function buildFilesMap(archive) {
+function buildFilesMap(folder) {
   const files = {};
 
-  Object.values(archive.files).forEach((file) => {
+  Object.values(folder.files).forEach((file) => {
     if (!file.dir) {
       files[getFilepath(file)] = file;
     }
@@ -19,7 +19,11 @@ function getFilepath(file) {
 }
 
 module.exports = {
-  unzip(data) {
-    return zip.loadAsync(data).then((archive) => buildFilesMap(archive));
+  unzip(archives) {
+    const folders = archives.map((archive) =>
+      zip.loadAsync(archive).then((folder) => buildFilesMap(folder))
+    );
+
+    return Promise.all(folders);
   },
 };

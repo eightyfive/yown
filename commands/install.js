@@ -2,8 +2,7 @@
 
 const File = require("../file");
 const Log = require("../logger");
-
-const add = require("./add");
+const importGists = require("../import");
 
 module.exports = async function install(cmd) {
   const exists = await File.exists("./yown.json");
@@ -14,7 +13,7 @@ module.exports = async function install(cmd) {
 
   const ids = await File.json("./yown.json");
 
-  for (let id of ids) {
-    await add(id, cmd);
-  }
+  Log.info("Fetching Gists archive...");
+
+  await importGists(ids, cmd);
 };
