@@ -38,10 +38,6 @@ module.exports = async function add(id, cmd) {
   // Config
   const config = await Utils.getConfig(files);
 
-  // if (config.dir) {
-  //   Log.info("Config detected...");
-  // }
-
   // Import files
   for (let filepath in files) {
     // Filter

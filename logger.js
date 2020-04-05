@@ -1,24 +1,25 @@
 const colors = require("colors");
 
 const session = {
-  copy: [],
-  skip: [],
-  force: [],
+  copied: [],
+  skipped: [],
+  forced: [],
 };
 
 const log = console.log;
+const logError = console.error;
 
 module.exports = {
   copy(filepath) {
-    session.skip.push("C ".green + filepath.grey);
+    session.copied.push("C ".green + filepath.grey);
   },
 
   force(filepath) {
-    session.force.push("F ".red + filepath.grey);
+    session.forced.push("F ".red + filepath.grey);
   },
 
   skip(filepath) {
-    session.skip.push("S ".white + filepath.grey);
+    session.skipped.push("S ".white + filepath.grey);
   },
 
   info(message) {
@@ -26,7 +27,7 @@ module.exports = {
   },
 
   error(message, err) {
-    console.error(`\n${message}`.red);
+    logError(`\n${message}`.red);
     log(err);
   },
 
@@ -39,15 +40,15 @@ module.exports = {
 
     log(" ");
 
-    if (session.copy.length) {
+    if (session.copied.length) {
       log("C ".green + (dryRun ? "= Copy" : "= Copied"));
     }
 
-    if (session.force.length) {
+    if (session.forced.length) {
       log("F ".red + "= Copied (Forced)");
     }
 
-    if (session.skip.length) {
+    if (session.skipped.length) {
       log("S ".white + (dryRun ? "= Skip" : "= Skipped"));
     }
 
