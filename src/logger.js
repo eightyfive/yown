@@ -1,4 +1,4 @@
-const colors = require("colors");
+const colors = require('colors');
 
 const session = {
   appended: [],
@@ -12,18 +12,18 @@ const logError = console.error;
 
 module.exports = {
   append(filepath) {
-    session.appended.push("A ".yellow + filepath.grey);
+    session.appended.push('A '.yellow + filepath.grey);
   },
   copy(filepath) {
-    session.copied.push("C ".green + filepath.grey);
+    session.copied.push('C '.green + filepath.grey);
   },
 
   force(filepath) {
-    session.forced.push("F ".red + filepath.grey);
+    session.forced.push('F '.red + filepath.grey);
   },
 
   skip(filepath) {
-    session.skipped.push("S ".white + filepath.grey);
+    session.skipped.push('S '.white + filepath.grey);
   },
 
   info(message) {
@@ -41,30 +41,30 @@ module.exports = {
   },
 
   session(dryRun) {
-    log(" ");
+    log(' ');
 
     Object.values(session)
       .flat()
       .forEach((txt) => log(txt));
 
-    log(" ");
+    log(' ');
 
     if (session.appended.length) {
-      log("A ".yellow + (dryRun ? "= Append" : "= Appended"));
+      log('A '.yellow + (dryRun ? '= Append' : '= Appended'));
     }
 
     if (session.copied.length) {
-      log("C ".green + (dryRun ? "= Copy" : "= Copied"));
+      log('C '.green + (dryRun ? '= Copy' : '= Copied'));
     }
 
     if (session.forced.length) {
-      log("F ".red + "= Copied (Forced)");
+      log('F '.red + '= Copied (Forced)');
     }
 
     if (session.skipped.length) {
-      log("S ".white + (dryRun ? "= Skip" : "= Skipped"));
+      log('S '.white + (dryRun ? '= Skip' : '= Skipped'));
     }
 
-    log("\nDRY RUN".green);
+    log('\nDRY RUN'.green);
   },
 };

@@ -1,4 +1,4 @@
-const zip = require("jszip");
+const zip = require('jszip');
 
 function buildFilesMap(folder) {
   const files = {};
@@ -13,13 +13,13 @@ function buildFilesMap(folder) {
 }
 
 function getFilename(file) {
-  return file.name.split("/").pop();
+  return file.name.split('/').pop();
 }
 
 module.exports = {
   unzip(archives) {
     const folders = archives.map((archive) =>
-      zip.loadAsync(archive).then((folder) => buildFilesMap(folder))
+      zip.loadAsync(archive).then((folder) => buildFilesMap(folder)),
     );
 
     return Promise.all(folders);

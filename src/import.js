@@ -1,15 +1,15 @@
 #!/usr/bin/env node
-const { prompt } = require("enquirer");
+const { prompt } = require('enquirer');
 
-const File = require("./file");
-const Github = require("./github");
-const Log = require("./logger");
-const Utils = require("./utils");
-const Zip = require("./zip");
+const File = require('./file');
+const Github = require('./github');
+const Log = require('./logger');
+const Utils = require('./utils');
+const Zip = require('./zip');
 
 module.exports = async function importGists(ids, cmd) {
   const archives = await Github.getGists(ids).catch((err) =>
-    Log.die("Error downloading archive", err)
+    Log.die('Error downloading archive', err),
   );
 
   // Unzip
@@ -30,7 +30,7 @@ async function importFiles(files, cmd) {
   // Import files
   for (let filename in files) {
     // Filter
-    if (filename === "yown.json") {
+    if (filename === 'yown.json') {
       continue;
     }
 
@@ -57,8 +57,8 @@ async function importFiles(files, cmd) {
 
     if (!overwrite) {
       const { confirmed } = await prompt({
-        type: "confirm",
-        name: "confirmed",
+        type: 'confirm',
+        name: 'confirmed',
         message: `overwrite ${filepath.grey}?`,
       });
 
