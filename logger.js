@@ -26,9 +26,14 @@ module.exports = {
     log(`${message}`.blue);
   },
 
-  error(message, err) {
+  die(message, err) {
     logError(`\n${message}`.red);
-    log(err);
+
+    if (err) {
+      log(err);
+    }
+
+    process.exit(1);
   },
 
   session(dryRun) {

@@ -16,8 +16,7 @@ module.exports = async function add(id, cmd) {
   try {
     data = await Github.getGist(id);
   } catch (err) {
-    Log.error("Error fetching Gist", err);
-    process.exit(1);
+    Log.die("Error fetching Gist", err);
   }
 
   // Download gist zip
@@ -26,8 +25,7 @@ module.exports = async function add(id, cmd) {
   try {
     data = await Github.getGistArchive(data);
   } catch (err) {
-    Log.error("Error downloading archive", err);
-    process.exit(1);
+    Log.die("Error downloading archive", err);
   }
 
   // Unzip
