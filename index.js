@@ -1,27 +1,19 @@
 #!/usr/bin/env node
 const { program } = require('commander');
-
+const command = require('./src/command');
 const info = require('./package.json');
-const commands = require('./src/commands');
 
 program.version(info.version);
 
 program
-  .command('install')
-  .option('-d, --dry-run', 'Dry run (nothing copied)')
-  .option('-f, --force', 'Force copy when file exists (overwrite)')
-  .action(commands.install);
+  .option('-d, --dry-run', 'Dry run (nothing copied)', false)
+  .option('-f, --force', 'Force copy when file exists (overwrite)', false);
 
-program
-  .command('add <id>')
-  .option('-d, --dry-run', 'Dry run (nothing copied)')
-  .option('-f, --force', 'Force copy when file exists (overwrite)')
-  .option('-q, --double-quote', 'If you use double quotes locally')
-  .action(commands.add);
+program.parse(process.argv);
 
-if (!process.argv.slice(2).length) {
+if (!program.args.length) {
   program.outputHelp();
   process.exit(1);
 }
 
-program.parse(process.argv);
+command(program.args, program);

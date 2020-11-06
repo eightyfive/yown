@@ -7,7 +7,7 @@ const Log = require('./logger');
 const Utils = require('./utils');
 const Zip = require('./zip');
 
-module.exports = async function importGists(ids, cmd) {
+module.exports = async function importGists(ids, options) {
   const archives = await Github.getGists(ids).catch((err) =>
     Log.die('Error downloading archive', err),
   );
@@ -16,14 +16,14 @@ module.exports = async function importGists(ids, cmd) {
   const folders = await Zip.unzip(archives);
 
   for (let files of folders) {
-    await importFiles(files, cmd);
+    await importFiles(files, options);
   }
 
   // Log results
-  Log.session(cmd.dryRun);
+  Log.session(options.dryRun);
 };
 
-async function importFiles(files, cmd) {
+async function importFiles(files, options) {
   // Config
   const config = await Utils.getConfig(files);
 
@@ -40,7 +40,7 @@ async function importFiles(files, cmd) {
     // File already exists ?
     const exists = await File.exists(filepath);
 
-    if (cmd.dryRun) {
+    if (options.dryRun) {
       if (append) {
         Log.append(filepath);
       } else if (exists) {
@@ -53,7 +53,7 @@ async function importFiles(files, cmd) {
     }
 
     // Overwrite file ?
-    let overwrite = !exists || append || cmd.force;
+    let overwrite = !exists || append || options.force;
 
     if (!overwrite) {
       const { confirmed } = await prompt({
