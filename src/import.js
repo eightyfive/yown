@@ -32,7 +32,7 @@ async function importFiles(files, options) {
       continue;
     }
 
-    const filepath = Utils.getFilepath(config.dir, filename);
+    const filepath = Utils.getFilepath(options.dir || config.dir, filename);
 
     // File patch ?
     const patch = Utils.isPatch(filename);
