@@ -7,8 +7,8 @@ describe('Filepath', () => {
     expect(fp('', 'foo\\bar.js')).toEqual('./foo/bar.js');
   });
 
-  test('Append', () => {
-    expect(fp('', 'foo\\bar_.js')).toEqual('./foo/bar.js');
+  test('Patch', () => {
+    expect(fp('', 'foo\\bar.js.patch')).toEqual('./foo/bar.js');
   });
 
   test('Dir', () => {

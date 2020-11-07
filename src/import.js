@@ -33,14 +33,16 @@ async function importFiles(files, options) {
     }
 
     const filepath = Utils.getFilepath(config.dir, filename);
-    const append = Utils.isAppend(filename);
+
+    // File patch ?
+    const patch = Utils.isPatch(filename);
 
     // File already exists ?
     const exists = await File.exists(filepath);
 
     if (options.dryRun) {
-      if (append) {
-        Log.append(filepath);
+      if (patch) {
+        Log.patch(filepath);
       } else if (exists) {
         Log.skip(filepath);
       } else {
@@ -51,7 +53,7 @@ async function importFiles(files, options) {
     }
 
     // Overwrite file ?
-    let overwrite = !exists || append || options.force;
+    let overwrite = !exists || patch || options.force;
 
     if (!overwrite) {
       const { confirmed } = await prompt({
@@ -70,16 +72,16 @@ async function importFiles(files, options) {
 
     const file = files[filename];
 
-    if (append) {
-      // Append to file
-      await File.append(file, filepath);
+    if (patch) {
+      // Patch file
+      await File.patch(file, filepath);
     } else {
       // Copy file
       await File.copy(file, filepath);
     }
 
-    if (append) {
-      Log.append(filepath);
+    if (patch) {
+      Log.patch(filepath);
     } else if (exists) {
       Log.force(filepath);
     } else {

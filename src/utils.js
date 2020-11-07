@@ -2,7 +2,7 @@ const trim = require('lodash.trim');
 const Log = require('./logger');
 
 const o = Object;
-const reAppend = /^([\w-]+)_\.([a-z]{2,4})$/;
+const rePatch = /^([\w-\\]+\.[a-z]{2,4})\.patch$/;
 
 module.exports = {
   getConfig(files) {
@@ -19,18 +19,18 @@ module.exports = {
     return Promise.resolve(config);
   },
 
-  isAppend(filename) {
-    return reAppend.test(filename);
+  isPatch(filename) {
+    return rePatch.test(filename);
   },
 
   getFilepath(dir, raw) {
     let filepath = raw.split('\\');
     let filename = filepath.pop();
 
-    const [, name, ext] = reAppend.exec(filename) || [];
+    let isPatch = rePatch.exec(filename);
 
-    if (name && ext) {
-      filename = `${name}.${ext}`;
+    if (isPatch) {
+      filename = isPatch[1];
     }
 
     filepath.push(filename);

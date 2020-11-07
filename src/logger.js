@@ -1,7 +1,7 @@
 const colors = require('colors');
 
 const session = {
-  appended: [],
+  patched: [],
   copied: [],
   skipped: [],
   forced: [],
@@ -11,9 +11,10 @@ const log = console.log;
 const logError = console.error;
 
 module.exports = {
-  append(filepath) {
-    session.appended.push('A '.yellow + filepath.grey);
+  patch(filepath) {
+    session.patched.push('P '.yellow + filepath.grey);
   },
+
   copy(filepath) {
     session.copied.push('C '.green + filepath.grey);
   },
@@ -49,8 +50,8 @@ module.exports = {
 
     log(' ');
 
-    if (session.appended.length) {
-      log('A '.yellow + (dryRun ? '= Append' : '= Appended'));
+    if (session.patched.length) {
+      log('P '.yellow + (dryRun ? '= Patch' : '= Patched'));
     }
 
     if (session.copied.length) {
@@ -65,6 +66,8 @@ module.exports = {
       log('S '.white + (dryRun ? '= Skip' : '= Skipped'));
     }
 
-    log('\nDRY RUN'.green);
+    if (dryRun) {
+      log('\nDRY RUN'.green);
+    }
   },
 };
