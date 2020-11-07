@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const Api = require('./api');
-const importGists = require('./import');
+const download = require('./import');
 
 module.exports = async function command(ids, options) {
   return Promise.all(
@@ -15,5 +15,5 @@ module.exports = async function command(ids, options) {
     }),
   )
     .then((gistIds) => gistIds.flat())
-    .then((gistIds) => importGists(gistIds, options));
+    .then((gistIds) => download(gistIds, options));
 };
