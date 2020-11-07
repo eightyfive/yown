@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-const { prompt } = require('enquirer');
+const path = require('path');
+const Git = require('nodegit');
 
 const File = require('./file');
 const Github = require('./github');
@@ -22,6 +23,23 @@ module.exports = async function importGists(ids, options) {
 };
 
 async function importFiles(files, options) {
+  // Git repo ?
+  const repoPath = path.resolve(process.cwd(), './.git');
+  const isRepo = await File.exists(repoPath);
+  const staged = {};
+
+  if (isRepo) {
+    const status = await Git.Repository.open(repoPath).then((repo) =>
+      repo.getStatus(),
+    );
+
+    status.forEach((file) => {
+      staged[`./${file.path()}`] = file.status();
+    });
+  } else {
+    Log.info('(No git repository detected)', 'YOLO mode');
+  }
+
   // Config
   const config = await Utils.getConfig(files);
 
@@ -52,20 +70,8 @@ async function importFiles(files, options) {
       continue;
     }
 
-    // Overwrite file ?
-    let overwrite = !exists || patch || options.force;
-
-    if (!overwrite) {
-      const { confirmed } = await prompt({
-        type: 'confirm',
-        name: 'confirmed',
-        message: `overwrite ${filepath.grey}?`,
-      });
-
-      overwrite = confirmed;
-    }
-
-    if (!overwrite) {
+    // Skip if file is not clean
+    if (staged[filepath]) {
       Log.skip(filepath);
       continue;
     }
@@ -82,8 +88,6 @@ async function importFiles(files, options) {
 
     if (patch) {
       Log.patch(filepath);
-    } else if (exists) {
-      Log.force(filepath);
     } else {
       Log.copy(filepath);
     }

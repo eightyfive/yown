@@ -1,14 +1,13 @@
-const colors = require('colors');
+require('colors');
 
 const session = {
   patched: [],
   copied: [],
   skipped: [],
-  forced: [],
 };
 
-const log = console.log;
-const logError = console.error;
+const o = Object;
+const { log, error: logError } = console;
 
 module.exports = {
   patch(filepath) {
@@ -19,16 +18,16 @@ module.exports = {
     session.copied.push('C '.green + filepath.grey);
   },
 
-  force(filepath) {
-    session.forced.push('F '.red + filepath.grey);
-  },
-
   skip(filepath) {
-    session.skipped.push('S '.white + filepath.grey);
+    session.skipped.push('S '.red + filepath.grey);
   },
 
-  info(message) {
-    log(`${message}`.blue);
+  info(message, title = '') {
+    if (title) {
+      log(title.inverse + ' ' + message.blue);
+    } else {
+      log(message.blue);
+    }
   },
 
   die(message, err) {
@@ -44,7 +43,7 @@ module.exports = {
   session(dryRun) {
     log(' ');
 
-    Object.values(session)
+    o.values(session)
       .flat()
       .forEach((txt) => log(txt));
 
@@ -58,12 +57,11 @@ module.exports = {
       log('C '.green + (dryRun ? '= Copy' : '= Copied'));
     }
 
-    if (session.forced.length) {
-      log('F '.red + '= Copied (Forced)');
-    }
-
     if (session.skipped.length) {
-      log('S '.white + (dryRun ? '= Skip' : '= Skipped'));
+      log(
+        'S '.red +
+          (dryRun ? '= Skip' : '= Skipped (not clean, commit changes)'),
+      );
     }
 
     if (dryRun) {
