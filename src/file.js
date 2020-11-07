@@ -15,11 +15,17 @@ module.exports = {
   },
 
   patch(file, dest) {
-    return Promise.all([
-      file.async('text'),
-      fs.readFile(dest, 'utf8'),
-    ]).then(([patch, original]) =>
-      fs.outputFile(dest, diff.applyPatch(original, patch)),
-    );
+    return fs
+      .pathExists(dest)
+      .then((exists) =>
+        exists ? fs.readFile(dest, 'utf8') : Promise.resolve(''),
+      )
+      .then((original) =>
+        file
+          .async('text')
+          .then((patch) =>
+            fs.outputFile(dest, diff.applyPatch(original, patch)),
+          ),
+      );
   },
 };
