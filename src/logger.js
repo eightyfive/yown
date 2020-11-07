@@ -22,12 +22,12 @@ module.exports = {
     session.skipped.push('S '.red + filepath.grey);
   },
 
-  info(message, title = '') {
-    if (title) {
-      log(title.inverse + ' ' + message.blue);
-    } else {
-      log(message.blue);
-    }
+  info(message) {
+    log(message.blue);
+  },
+
+  warn(title, message) {
+    log(title.inverse + ' ' + message.blue);
   },
 
   die(message, err) {

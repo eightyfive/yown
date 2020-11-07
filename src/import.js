@@ -37,7 +37,7 @@ async function importFiles(files, options) {
       staged[`./${file.path()}`] = file.status();
     });
   } else {
-    Log.info('(No git repository detected)', 'YOLO mode');
+    Log.warn('YOLO mode', '(No git repository detected)');
   }
 
   // Config
