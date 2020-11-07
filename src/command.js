@@ -5,8 +5,10 @@ const importGists = require('./import');
 module.exports = async function command(ids, options) {
   return Promise.all(
     ids.map((id) => {
-      if (id.indexOf('@') === 0) {
-        return Api.find(id).then((yowns) => yowns.map((yown) => yown.gist_id));
+      const isName = id.indexOf('@') === 0;
+
+      if (isName) {
+        return Api.find(id);
       }
 
       return Promise.resolve(id);
