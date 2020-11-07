@@ -5,7 +5,7 @@ const importGists = require('./import');
 module.exports = async function command(ids, options) {
   return Promise.all(
     ids.map((id) => {
-      const isName = id.indexOf('@') === 0;
+      const isName = id.indexOf('@') === 0 && id.split('/').length === 2;
 
       if (isName) {
         return Api.find(id);
@@ -15,9 +15,5 @@ module.exports = async function command(ids, options) {
     }),
   )
     .then((gistIds) => gistIds.flat())
-    .then((gistIds) => {
-      console.log(gistIds);
-
-      return importGists(gistIds, options);
-    });
+    .then((gistIds) => importGists(gistIds, options));
 };
