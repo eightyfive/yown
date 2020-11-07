@@ -8,7 +8,7 @@ program.version(info.version);
 program
   .option('-d, --dry-run', 'Dry run (nothing copied)', false)
   .option('--dir <path>', 'Output dir')
-  .option('-f, --force', 'Force copy when file exists (overwrite)', false);
+  .option('--force', 'Force copy when file exists (overwrite)', false);
 
 program.parse(process.argv);
 
