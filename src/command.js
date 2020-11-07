@@ -8,7 +8,7 @@ module.exports = async function command(ids, options) {
       const isName = id.indexOf('@') === 0 && id.split('/').length === 2;
 
       if (isName) {
-        return Api.find(id);
+        return Api.find(id.substring(1));
       }
 
       return Promise.resolve(id);
