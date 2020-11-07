@@ -1,5 +1,7 @@
 const trim = require('lodash.trim');
+const Log = require('./logger');
 
+const o = Object;
 const reAppend = /^([\w-]+)_\.([a-z]{2,4})$/;
 
 module.exports = {
@@ -10,7 +12,8 @@ module.exports = {
     if (configFile) {
       return configFile
         .async('string')
-        .then((str) => Object.assign(config, JSON.parse(str)));
+        .then((str) => o.assign(config, JSON.parse(str)))
+        .catch((err) => Log.die('Error parsing yown.json file', err));
     }
 
     return Promise.resolve(config);

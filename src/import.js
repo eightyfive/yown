@@ -8,9 +8,7 @@ const Utils = require('./utils');
 const Zip = require('./zip');
 
 module.exports = async function importGists(ids, options) {
-  const archives = await Github.getGistArchives(ids).catch((err) =>
-    Log.die('Error downloading gist archive', err),
-  );
+  const archives = await Github.getGistArchives(ids);
 
   // Unzip
   const folders = await Zip.unzip(archives);
