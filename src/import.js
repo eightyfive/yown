@@ -53,13 +53,13 @@ async function importFiles(files, options) {
     const filepath = Utils.getFilepath(options.dir || config.dir, filename);
 
     // File patch ?
-    const patch = Utils.isPatch(filename);
+    const isPatch = Utils.isPatch(filename);
 
     // File already exists ?
     const exists = await File.exists(filepath);
 
     if (options.dryRun) {
-      if (patch) {
+      if (isPatch) {
         Log.patch(filepath);
       } else if (exists) {
         Log.skip(filepath);
@@ -78,7 +78,7 @@ async function importFiles(files, options) {
 
     const file = files[filename];
 
-    if (patch) {
+    if (isPatch) {
       // Patch file
       await File.patch(file, filepath);
     } else {
@@ -86,7 +86,7 @@ async function importFiles(files, options) {
       await File.copy(file, filepath);
     }
 
-    if (patch) {
+    if (isPatch) {
       Log.patch(filepath);
     } else {
       Log.copy(filepath);
