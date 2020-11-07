@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const Api = require('./api');
-const download = require('./import');
+const download = require('./download');
 
 module.exports = async function command(ids, options) {
   return Promise.all(
