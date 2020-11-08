@@ -9,7 +9,7 @@ const options = {
   json: true,
   rejectUnauthorized: false,
   headers: {
-    'X-UID': computerId,
+    'X-UDID': computerId,
   },
 };
 
