@@ -3,13 +3,10 @@ const { program } = require('commander');
 const command = require('./src/command');
 const info = require('./package.json');
 
-program.version(info.version);
-
 program
-  .option('-d, --dry-run', 'Dry run (nothing copied)', false)
-  .option('--dir <path>', 'Output dir');
-
-program.parse(process.argv);
+  .version(info.version)
+  .option('--dir <path>', 'Output dir')
+  .parse(process.argv);
 
 if (!program.args.length) {
   program.outputHelp();

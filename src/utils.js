@@ -4,43 +4,35 @@ const Log = require('./logger');
 const o = Object;
 const rePatch = /^([\w-\\]+\.[a-z]{2,4})\.patch$/;
 
+function getFilepath(dir, raw) {
+  let filepath = raw.split('\\');
+  let filename = filepath.pop();
+
+  let isPatch = rePatch.exec(filename);
+
+  if (isPatch) {
+    filename = isPatch[1];
+  }
+
+  filepath.push(filename);
+
+  const dirName = trim(dir, './');
+
+  if (dirName) {
+    filepath.unshift(dirName);
+  }
+
+  return `./${filepath.join('/')}`;
+}
+
 module.exports = {
-  getConfig(files) {
-    const config = { dir: '' };
-    const configFile = files['yown.json'];
-
-    if (configFile) {
-      return configFile
-        .async('string')
-        .then((str) => o.assign(config, JSON.parse(str)))
-        .catch((err) => Log.die('Error parsing yown.json file', err));
-    }
-
-    return Promise.resolve(config);
+  isName(arg) {
+    return arg.indexOf('@') === 0 && arg.split('/').length === 2;
   },
 
   isPatch(filename) {
-    return rePatch.test(filename);
+    return rePatch.test(filename.split('\\').pop());
   },
 
-  getFilepath(dir, raw) {
-    let filepath = raw.split('\\');
-    let filename = filepath.pop();
-
-    let isPatch = rePatch.exec(filename);
-
-    if (isPatch) {
-      filename = isPatch[1];
-    }
-
-    filepath.push(filename);
-
-    const dirName = trim(dir, './');
-
-    if (dirName) {
-      filepath.unshift(dirName);
-    }
-
-    return `./${filepath.join('/')}`;
-  },
+  getFilepath,
 };

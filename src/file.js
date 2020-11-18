@@ -6,26 +6,18 @@ module.exports = {
     return fs.pathExists(path);
   },
 
-  json(path) {
-    return fs.readJson(path);
+  copy(content, dest) {
+    return fs.outputFile(dest, content);
   },
 
-  copy(file, dest) {
-    return file.async('nodebuffer').then((buff) => fs.outputFile(dest, buff));
-  },
-
-  patch(file, dest) {
+  patch(content, dest) {
     return fs
       .pathExists(dest)
       .then((exists) =>
         exists ? fs.readFile(dest, 'utf8') : Promise.resolve(''),
       )
       .then((original) =>
-        file
-          .async('text')
-          .then((patch) =>
-            fs.outputFile(dest, diff.applyPatch(original, patch)),
-          ),
+        fs.outputFile(dest, diff.applyPatch(original, content)),
       );
   },
 };

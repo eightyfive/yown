@@ -1,25 +1,22 @@
 require('colors');
 
-const session = {
-  patched: [],
-  copied: [],
-  skipped: [],
-};
-
-const o = Object;
 const { log, error: logError } = console;
 
 module.exports = {
+  gist(id, message) {
+    log(id.white + ': ' + message.grey);
+  },
+
   patch(filepath) {
-    session.patched.push('P '.yellow + filepath.grey);
+    log('P '.yellow + filepath.grey);
   },
 
   copy(filepath) {
-    session.copied.push('C '.green + filepath.grey);
+    log('C '.green + filepath.grey);
   },
 
-  skip(filepath) {
-    session.skipped.push('S '.red + filepath.grey);
+  ignore(filepath) {
+    log('I '.red + filepath.grey);
   },
 
   info(message) {
@@ -40,32 +37,10 @@ module.exports = {
     process.exit(1);
   },
 
-  session(dryRun) {
+  help() {
     log(' ');
-
-    o.values(session)
-      .flat()
-      .forEach((txt) => log(txt));
-
-    log(' ');
-
-    if (session.patched.length) {
-      log('P '.yellow + (dryRun ? '= Patch' : '= Patched'));
-    }
-
-    if (session.copied.length) {
-      log('C '.green + (dryRun ? '= Copy' : '= Copied'));
-    }
-
-    if (session.skipped.length) {
-      log(
-        'S '.red +
-          (dryRun ? '= Skip' : '= Skipped (not clean, commit changes)'),
-      );
-    }
-
-    if (dryRun) {
-      log('\nDRY RUN'.green);
-    }
+    log('C '.green + '= Copied');
+    log('P '.yellow + '= Patched');
+    log('I '.red + '= Ignored (not clean, commit changes)');
   },
 };

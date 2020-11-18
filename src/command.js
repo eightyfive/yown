@@ -1,3 +1,5 @@
+const { from, merge, of } = require('rxjs');
+const { catchError, map, mergeMap, tap } = require('rxjs/operators');
 const path = require('path');
 const Git = require('nodegit');
 
@@ -6,39 +8,67 @@ const File = require('./file');
 const Github = require('./github');
 const Log = require('./logger');
 const Utils = require('./utils');
-const Zip = require('./zip');
 
-module.exports = function command(ids, options) {
-  return Promise.all(
-    ids.map((id) => {
-      const isName = id.indexOf('@') === 0 && id.split('/').length === 2;
+module.exports = async function command(args, options) {
+  const staged = await getStagedFilenames();
 
-      if (isName) {
-        return Api.find(id.substring(1));
-      }
+  // Normalize Gist IDs
+  const ids$ = of(...args).pipe(mergeMap((arg) => mergeName(arg)));
 
-      return Promise.resolve(id);
-    }),
-  )
-    .then((gistIds) => gistIds.flat())
-    .then((gistIds) => copyGists(gistIds, options));
+  // Gists
+  const gists$ = ids$
+    .pipe(
+      tap((id) => Log.gist(id, 'Fetching Gist')),
+      mergeMap(fetchGist),
+    )
+    .pipe(
+      // Merge bundled Gist IDs
+      mergeMap((gist) => mergeBundled(gist)),
+      catchError((err) => console.log(err)),
+    )
+    .pipe(
+      // Map file paths
+      map((gist) => mapFilepaths(gist, gist._config, options)),
+      catchError((err) => console.error(err)),
+    );
+
+  const results$ = gists$
+    .pipe(mergeMap((gist) => mergeFiles(gist)))
+    .pipe(mergeMap((file) => mergeTask(file, Boolean(staged[file._filepath]))));
+
+  results$.subscribe(
+    (value) => {},
+    (err) => {},
+    () => {
+      Log.help();
+      console.log('\nDone !');
+      process.exit(1);
+    },
+  );
 };
 
-async function copyGists(ids, options) {
-  const archives = await Github.getGistArchives(ids);
+function mapConfig(files) {
+  const yownFile = files['yown.json'];
 
-  // Unzip
-  const folders = await Zip.unzip(archives);
-
-  for (let files of folders) {
-    await copyFiles(files, options);
+  if (yownFile) {
+    return JSON.parse(yownFile.content);
   }
 
-  // Log results
-  Log.session(options.dryRun);
+  return {};
 }
 
-async function copyFiles(files, options) {
+function fetchGist(id) {
+  return from(Github.getGist(id)).pipe(
+    // Map config
+    map((gist) => {
+      gist._config = mapConfig(gist.files);
+
+      return gist;
+    }),
+  );
+}
+
+async function getStagedFilenames() {
   // Git repo ?
   const repoPath = path.resolve(process.cwd(), './.git');
   const isRepo = await File.exists(repoPath);
@@ -56,41 +86,71 @@ async function copyFiles(files, options) {
     Log.warn('YOLO mode', '(No git repository detected)');
   }
 
-  // Config
-  const config = await Utils.getConfig(files);
+  return staged;
+}
 
-  // Copy files
-  for (let filename in files) {
-    // Ignore
-    if (filename === 'yown.json') {
-      continue;
-    }
+function mapFilepaths(gist, config, options) {
+  gist._files = Object.values(gist.files).map((file) => {
+    file._filepath = Utils.getFilepath(
+      options.dir || config.dir,
+      file.filename,
+    );
 
-    const filepath = Utils.getFilepath(options.dir || config.dir, filename);
+    return file;
+  });
 
-    // File patch ?
-    const isPatch = Utils.isPatch(filename);
-    const isStaged = staged[filepath];
+  return gist;
+}
 
-    if (isPatch) {
-      Log.patch(filepath);
-    } else if (isStaged) {
-      Log.skip(filepath);
-    } else {
-      Log.copy(filepath);
-    }
+function mergeBundled(gist) {
+  const { bundled = [] } = gist._config;
 
-    // Skip if file is not clean
-    if (isStaged || options.dryRun) {
-      continue;
-    }
+  let bundled$;
 
-    const file = files[filename];
-
-    if (isPatch) {
-      await File.patch(file, filepath);
-    } else {
-      await File.copy(file, filepath);
-    }
+  if (bundled.length) {
+    bundled$ = of(...bundled).pipe(
+      tap((id) => Log.gist(id, 'Fetching Gist')),
+      mergeMap(fetchGist),
+    );
+  } else {
+    bundled$ = from([]);
   }
+
+  return merge(of(gist), bundled$);
+}
+
+function mergeName(arg) {
+  const isName = Utils.isName(arg);
+
+  if (isName) {
+    return from(Api.find(arg)).pipe(tap((id) => Log.gist(id, arg)));
+  }
+
+  return of(arg);
+}
+
+function mergeFiles(gist) {
+  return from(Object.values(gist._files));
+}
+
+function mergeTask(file, ignore) {
+  const filepath = file._filepath;
+  const isPatch = Utils.isPatch(file.filename);
+
+  // Ignore file
+  if (ignore) {
+    return of(filepath).pipe(tap(() => Log.ignore(filepath)));
+  }
+
+  // Patch file
+  if (isPatch) {
+    return from(File.patch(file.content, filepath)).pipe(
+      tap(() => Log.patch(filepath)),
+    );
+  }
+
+  // Copy file
+  return from(File.copy(file.content, filepath)).pipe(
+    tap(() => Log.copy(filepath)),
+  );
 }
