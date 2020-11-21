@@ -2,7 +2,7 @@ const request = require('request-promise-native');
 const Computer = require('node-machine-id');
 const Log = require('./logger');
 
-const API_URL = 'https://api.yown.val';
+const API_URL = 'https://api.yown.org';
 const computerId = Computer.machineIdSync();
 
 const options = {
