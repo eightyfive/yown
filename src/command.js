@@ -14,7 +14,7 @@ module.exports = async function command(args, options) {
   const staged = await getStagedFilenames();
 
   // Normalize Gist IDs
-  const ids$ = of(...args).pipe(mergeMap((arg) => mergeName(arg)));
+  const ids$ = of(...args).pipe(mergeMap((arg) => ofName(arg)));
 
   // Gists
   const gists$ = ids$
@@ -29,6 +29,7 @@ module.exports = async function command(args, options) {
     )
     .pipe(
       // Map file paths
+      map((gist) => mapFilepaths(gist, gist._config, options)),
       map((gist) => mapFilepaths(gist, gist._config, options)),
       catchError((err) => console.error(err)),
     );
@@ -120,7 +121,7 @@ function mergeBundled(gist) {
   return merge(of(gist), bundled$);
 }
 
-function mergeName(arg) {
+function ofName(arg) {
   const isName = Utils.isName(arg);
 
   if (isName) {
