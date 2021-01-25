@@ -1,5 +1,5 @@
 const { from, merge, of } = require('rxjs');
-const { catchError, map, mergeMap, tap } = require('rxjs/operators');
+const { catchError, filter, map, mergeMap, tap } = require('rxjs/operators');
 const path = require('path');
 const git = require('isomorphic-git');
 const fs = require('fs-extra');
@@ -9,6 +9,8 @@ const File = require('./file');
 const Github = require('./github');
 const Log = require('./logger');
 const Utils = require('./utils');
+
+const YOWNFILE = 'yown.json';
 
 module.exports = async function command(args, options) {
   const staged = await getStagedFilenames();
@@ -36,6 +38,7 @@ module.exports = async function command(args, options) {
 
   const results$ = gists$
     .pipe(mergeMap((gist) => ofFiles(gist)))
+    .pipe(filter((file) => file.filename !== YOWNFILE))
     .pipe(mergeMap((file) => ofTask(file, staged.includes(file._filepath))));
 
   results$.subscribe(
@@ -50,7 +53,7 @@ module.exports = async function command(args, options) {
 };
 
 function mapConfig(files) {
-  const yownFile = files['yown.json'];
+  const yownFile = files[YOWNFILE];
 
   if (yownFile) {
     return JSON.parse(yownFile.content);
