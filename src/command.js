@@ -1,5 +1,12 @@
 const { from, merge, of } = require('rxjs');
-const { catchError, filter, map, mergeMap, tap } = require('rxjs/operators');
+const {
+  catchError,
+  concatMap,
+  filter,
+  map,
+  mergeMap,
+  tap,
+} = require('rxjs/operators');
 const path = require('path');
 const git = require('isomorphic-git');
 const fs = require('fs-extra');
@@ -42,7 +49,7 @@ module.exports = async function command(args, options) {
   const results$ = gists$
     .pipe(mergeMap((gist) => fromFiles(gist)))
     .pipe(filter((file) => file.filename !== YOWNFILE))
-    .pipe(mergeMap((file) => mapPlaceholder(file)))
+    .pipe(concatMap((file) => mapPlaceholder(file)))
     .pipe(mergeMap((file) => ofTask(file, staged.includes(file._filepath))));
 
   results$.subscribe(
