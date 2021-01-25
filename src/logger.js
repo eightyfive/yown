@@ -2,21 +2,33 @@ require('colors');
 
 const { log, error: logError } = console;
 
+const logs = [];
+
+let patched = false;
+let copied = false;
+let ignored = false;
+
 module.exports = {
   gist(id, message) {
     log(id.white + ': ' + message.grey);
   },
 
   patch(filepath) {
-    log('P '.yellow + filepath.grey);
+    patched = true;
+
+    logs.push('P '.yellow + filepath.grey);
   },
 
   copy(filepath) {
-    log('C '.green + filepath.grey);
+    copied = true;
+
+    logs.push('C '.green + filepath.grey);
   },
 
   ignore(filepath) {
-    log('I '.red + filepath.grey);
+    ignored = true;
+
+    logs.push('I '.red + filepath.grey);
   },
 
   info(message) {
@@ -38,9 +50,17 @@ module.exports = {
   },
 
   help() {
+    logs.forEach((txt) => log(txt));
+
     log(' ');
-    log('C '.green + '= Copied');
-    log('P '.yellow + '= Patched');
-    log('I '.red + '= Ignored (not clean, commit changes)');
+    if (copied) {
+      log('C '.green + '= Copied');
+    }
+    if (patched) {
+      log('P '.yellow + '= Patched');
+    }
+    if (ignored) {
+      log('I '.red + '= Ignored (not clean, commit changes)');
+    }
   },
 };
