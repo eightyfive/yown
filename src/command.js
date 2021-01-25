@@ -40,9 +40,9 @@ module.exports = async function command(args, options) {
     );
 
   const results$ = gists$
-    .pipe(mergeMap((gist) => ofFiles(gist)))
+    .pipe(mergeMap((gist) => fromFiles(gist)))
     .pipe(filter((file) => file.filename !== YOWNFILE))
-    .pipe(mergeMap((file) => replacePlaceholder(file)))
+    .pipe(mergeMap((file) => mapPlaceholder(file)))
     .pipe(mergeMap((file) => ofTask(file, staged.includes(file._filepath))));
 
   results$.subscribe(
@@ -56,7 +56,7 @@ module.exports = async function command(args, options) {
   );
 };
 
-function mapConfig(files) {
+function findConfig(files) {
   const yownFile = files[YOWNFILE];
 
   if (yownFile) {
@@ -70,7 +70,7 @@ function fetchGist(id) {
   return from(Github.getGist(id)).pipe(
     // Map config
     map((gist) => {
-      gist._config = mapConfig(gist.files);
+      gist._config = findConfig(gist.files);
 
       return gist;
     }),
@@ -111,7 +111,7 @@ function mapFilepaths(gist, config, options) {
   return gist;
 }
 
-function replacePlaceholder(file) {
+function mapPlaceholder(file) {
   const [, varName] = rePlaceholder.exec(file._filepath) || [];
 
   if (!varName) {
@@ -176,7 +176,7 @@ function ofName(arg) {
   return of(arg);
 }
 
-function ofFiles(gist) {
+function fromFiles(gist) {
   return from(Object.values(gist._files));
 }
 
