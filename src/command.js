@@ -3,6 +3,7 @@ const { catchError, filter, map, mergeMap, tap } = require('rxjs/operators');
 const path = require('path');
 const git = require('isomorphic-git');
 const fs = require('fs-extra');
+const inquirer = require('inquirer');
 
 const Api = require('./api');
 const File = require('./file');
@@ -11,6 +12,9 @@ const Log = require('./logger');
 const Utils = require('./utils');
 
 const YOWNFILE = 'yown.json';
+
+const rePlaceholder = /<(\w+)>/g;
+const placeholders = {};
 
 module.exports = async function command(args, options) {
   const staged = await getStagedFilenames();
@@ -32,13 +36,13 @@ module.exports = async function command(args, options) {
     .pipe(
       // Map file paths
       map((gist) => mapFilepaths(gist, gist._config, options)),
-      map((gist) => mapFilepaths(gist, gist._config, options)),
       catchError((err) => console.error(err)),
     );
 
   const results$ = gists$
     .pipe(mergeMap((gist) => ofFiles(gist)))
     .pipe(filter((file) => file.filename !== YOWNFILE))
+    .pipe(mergeMap((file) => replacePlaceholder(file)))
     .pipe(mergeMap((file) => ofTask(file, staged.includes(file._filepath))));
 
   results$.subscribe(
@@ -107,6 +111,44 @@ function mapFilepaths(gist, config, options) {
   return gist;
 }
 
+function replacePlaceholder(file) {
+  const [, varName] = rePlaceholder.exec(file._filepath) || [];
+
+  if (!varName) {
+    return from(Promise.resolve(file));
+  }
+
+  let placeholder;
+
+  if (placeholders[varName]) {
+    placeholder = Promise.resolve(placeholders[varName]);
+  } else {
+    Log.info('\n' + file._filepath);
+    placeholder = inquirer
+      .prompt({
+        type: 'input',
+        name: varName,
+        message: `Replace <${varName}> by:`,
+      })
+      .then((answer) => answer[varName]);
+  }
+
+  // Replace placeholder
+  const re = new RegExp(`<${varName}>`, 'g');
+
+  const replaced = placeholder.then((value) => {
+    file._filepath = file._filepath.replace(re, value);
+    file.content = file.content.replace(re, value);
+
+    // Cache
+    placeholders[varName] = value;
+
+    return file;
+  });
+
+  return from(replaced);
+}
+
 function mergeBundled(gist) {
   const { bundled = [] } = gist._config;
 
@@ -139,23 +181,23 @@ function ofFiles(gist) {
 }
 
 function ofTask(file, ignore) {
-  const filepath = file._filepath;
+  const filePath = file._filepath;
   const isPatch = Utils.isPatch(file.filename);
 
   // Ignore file
   if (ignore) {
-    return of(filepath).pipe(tap(() => Log.ignore(filepath)));
+    return of(filePath).pipe(tap(() => Log.ignore(filePath)));
   }
 
   // Patch file
   if (isPatch) {
-    return from(File.patch(file.content, filepath)).pipe(
-      tap(() => Log.patch(filepath)),
+    return from(File.patch(file.content, filePath)).pipe(
+      tap(() => Log.patch(filePath)),
     );
   }
 
   // Copy file
-  return from(File.copy(file.content, filepath)).pipe(
-    tap(() => Log.copy(filepath)),
+  return from(File.copy(file.content, filePath)).pipe(
+    tap(() => Log.copy(filePath)),
   );
 }
