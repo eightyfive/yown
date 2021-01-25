@@ -24,35 +24,38 @@ const rePlaceholder = /<(\w+)>/g;
 const placeholders = {};
 
 module.exports = async function command(args, options) {
-  const staged = await getStagedFilenames();
+  const staled = await getStaleFilenames();
 
   // Normalize Gist IDs
   const ids$ = of(...args).pipe(mergeMap((arg) => ofName(arg)));
 
-  // Gists
+  // Fetch Gists
   const gists$ = ids$
     .pipe(
       tap((id) => Log.gist(id, 'Fetching Gist')),
       mergeMap(fetchGist),
     )
     .pipe(
-      // Merge bundled Gist IDs
+      // Fetch bundled Gist IDs
       mergeMap((gist) => mergeBundled(gist)),
       catchError((err) => console.log(err)),
     )
     .pipe(
-      // Map file paths
+      // Map real file paths
       map((gist) => mapFilepaths(gist, gist._config, options)),
       catchError((err) => console.error(err)),
     );
 
-  const results$ = gists$
+  const tasks$ = gists$
     .pipe(mergeMap((gist) => fromFiles(gist)))
+    // Ignore yown file
     .pipe(filter((file) => file.filename !== YOWNFILE))
+    // Prompt placeholder in file names
     .pipe(concatMap((file) => mapPlaceholder(file)))
-    .pipe(mergeMap((file) => ofTask(file, staged.includes(file._filepath))));
+    // Copy, patch or ignore (task)
+    .pipe(mergeMap((file) => ofTask(file, staled.includes(file._filepath))));
 
-  results$.subscribe(
+  tasks$.subscribe(
     (value) => {},
     (err) => {},
     () => {
@@ -84,7 +87,7 @@ function fetchGist(id) {
   );
 }
 
-async function getStagedFilenames() {
+async function getStaleFilenames() {
   const workingDir = process.cwd();
 
   // Git repo ?
@@ -189,7 +192,6 @@ function fromFiles(gist) {
 
 function ofTask(file, ignore) {
   const filePath = file._filepath;
-  const isPatch = Utils.isPatch(file.filename);
 
   // Ignore file
   if (ignore) {
@@ -197,6 +199,8 @@ function ofTask(file, ignore) {
   }
 
   // Patch file
+  const isPatch = Utils.isPatch(file.filename);
+
   if (isPatch) {
     return from(File.patch(file.content, filePath)).pipe(
       tap(() => Log.patch(filePath)),
