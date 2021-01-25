@@ -80,7 +80,11 @@ function fetchGist(id) {
   return from(Github.getGist(id)).pipe(
     // Map config
     map((gist) => {
-      gist._config = findConfig(gist.files);
+      try {
+        gist._config = findConfig(gist.files);
+      } catch (err) {
+        Log.die('Error parsing yown.json', id);
+      }
 
       return gist;
     }),
