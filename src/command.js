@@ -1,7 +1,8 @@
 const { from, merge, of } = require('rxjs');
 const { catchError, map, mergeMap, tap } = require('rxjs/operators');
 const path = require('path');
-const Git = require('nodegit');
+const git = require('isomorphic-git');
+const fs = require('fs-extra');
 
 const Api = require('./api');
 const File = require('./file');
@@ -33,8 +34,8 @@ module.exports = async function command(args, options) {
     );
 
   const results$ = gists$
-    .pipe(mergeMap((gist) => mergeFiles(gist)))
-    .pipe(mergeMap((file) => mergeTask(file, Boolean(staged[file._filepath]))));
+    .pipe(mergeMap((gist) => ofFiles(gist)))
+    .pipe(mergeMap((file) => ofTask(file, staged.includes(file._filepath))));
 
   results$.subscribe(
     (value) => {},
@@ -69,24 +70,24 @@ function fetchGist(id) {
 }
 
 async function getStagedFilenames() {
+  const workingDir = process.cwd();
+
   // Git repo ?
-  const repoPath = path.resolve(process.cwd(), './.git');
-  const isRepo = await File.exists(repoPath);
-  const staged = {};
+  const gitPath = path.resolve(workingDir, './.git');
+  const gitExists = await File.exists(gitPath);
 
-  if (isRepo) {
-    const status = await Git.Repository.open(repoPath).then((repo) =>
-      repo.getStatus(),
-    );
-
-    status.forEach((file) => {
-      staged[`./${file.path()}`] = file.status();
-    });
-  } else {
+  if (!gitExists) {
     Log.warn('YOLO mode', '(No git repository detected)');
+
+    return [];
   }
 
-  return staged;
+  const files = await git.statusMatrix({ dir: workingDir, fs });
+
+  // https://isomorphic-git.org/docs/en/statusMatrix
+  return files
+    .filter((file) => file[2] !== file[3])
+    .map((file) => `./${file[0]}`);
 }
 
 function mapFilepaths(gist, config, options) {
@@ -129,11 +130,11 @@ function mergeName(arg) {
   return of(arg);
 }
 
-function mergeFiles(gist) {
+function ofFiles(gist) {
   return from(Object.values(gist._files));
 }
 
-function mergeTask(file, ignore) {
+function ofTask(file, ignore) {
   const filepath = file._filepath;
   const isPatch = Utils.isPatch(file.filename);
 
