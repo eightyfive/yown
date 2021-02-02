@@ -61,7 +61,7 @@ module.exports = async function command(args, options) {
     () => {
       Log.help();
       console.log('\nDone !');
-      process.exit(1);
+      process.exit(0);
     },
   );
 };
