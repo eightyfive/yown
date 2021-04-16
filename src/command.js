@@ -12,6 +12,7 @@ const Log = require('./logger');
 const Utils = require('./utils');
 
 const YOWNFILE = 'yown.json';
+const README = 'README.md';
 
 const reHolder = /<(\w+)>/g;
 const prompts = {};
@@ -93,7 +94,7 @@ function fromFiles(gist, config, options) {
 
       return file;
     })
-    .filter((file) => file.filename !== YOWNFILE);
+    .filter(({ filename }) => filename !== YOWNFILE && filename !== README);
 
   return from(files);
 }
