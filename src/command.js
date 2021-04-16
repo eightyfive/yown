@@ -17,7 +17,7 @@ const reHolder = /<(\w+)>/g;
 const prompts = {};
 
 module.exports = async function command(args, options) {
-  const staled = await getStaleFilenames();
+  const dirty = await getDirty();
 
   const tasks$ = from(args).pipe(
     // Normalize gist IDs
@@ -36,7 +36,7 @@ module.exports = async function command(args, options) {
     concatMap((file) => promptPlaceholder(file)),
 
     // Copy, patch or ignore (task)
-    mergeMap((file) => ofTask(file, staled.includes(file._filepath))),
+    mergeMap((file) => ofTask(file, dirty.includes(file._filepath))),
   );
 
   tasks$.subscribe(
@@ -164,7 +164,7 @@ function ofTask(file, ignore) {
   );
 }
 
-async function getStaleFilenames() {
+async function getDirty() {
   const workingDir = process.cwd();
 
   // Git repo ?
@@ -172,15 +172,13 @@ async function getStaleFilenames() {
   const gitExists = await File.exists(gitPath);
 
   if (!gitExists) {
-    Log.warn('YOLO mode', '(No git repository detected)');
-
-    return [];
+    Log.die('No git repository detected', workingDir);
   }
 
   const files = await git.statusMatrix({ dir: workingDir, fs });
 
   // https://isomorphic-git.org/docs/en/statusMatrix
   return files
-    .filter((file) => file[2] !== file[3])
-    .map((file) => `./${file[0]}`);
+    .filter(([, ...status]) => status.join(',') !== '1,1,1')
+    .map(([filename]) => `./${filename}`);
 }
