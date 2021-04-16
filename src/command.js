@@ -1,5 +1,5 @@
 const { from, of } = require('rxjs');
-const { concatMap, map, mergeMap, tap } = require('rxjs/operators');
+const { concatMap, map, tap } = require('rxjs/operators');
 const path = require('path');
 const git = require('isomorphic-git');
 const fs = require('fs-extra');
@@ -22,22 +22,22 @@ module.exports = async function command(args, options) {
 
   const tasks$ = from(args).pipe(
     // Normalize gist IDs
-    mergeMap((arg) => ofGistId(arg)),
+    concatMap((arg) => ofGistId(arg)),
 
     // Fetch gist
-    mergeMap((id) => ofGist(id)),
+    concatMap((id) => ofGist(id)),
 
     // Parse gist config
     map((gist) => withConfig(gist)),
 
     // Map gist files
-    mergeMap(([gist, config]) => fromFiles(gist, config, options)),
+    concatMap(([gist, config]) => fromFiles(gist, config, options)),
 
     // Prompt replace placeholder in file names
     concatMap((file) => promptPlaceholder(file)),
 
     // Copy, patch or ignore (task)
-    mergeMap((file) => ofTask(file, dirty.includes(file._filepath))),
+    concatMap((file) => ofTask(file, dirty.includes(file._filepath))),
   );
 
   tasks$.subscribe(
