@@ -1,3 +1,4 @@
+const _uniq = require('lodash.uniq');
 const { from, of } = require('rxjs');
 const { concatMap, map, tap } = require('rxjs/operators');
 const path = require('path');
@@ -18,7 +19,11 @@ const reHolder = /<(\w+)>/g;
 const prompts = {};
 
 module.exports = async function command(args, options) {
-  const dirty = await getDirty();
+  const cwd = process.cwd();
+
+  const [dirtyFiles, useYarn] = await Promise.all([getDirty(cwd), isYarn(cwd)]);
+
+  const configs = [];
 
   const tasks$ = from(args).pipe(
     // Normalize gist IDs
@@ -30,6 +35,9 @@ module.exports = async function command(args, options) {
     // Parse gist config
     map((gist) => withConfig(gist)),
 
+    // Remember config
+    tap(([, config]) => configs.push(config)),
+
     // Map gist files
     concatMap(([gist, config]) => fromFiles(gist, config, options)),
 
@@ -37,7 +45,7 @@ module.exports = async function command(args, options) {
     concatMap((file) => promptPlaceholder(file)),
 
     // Copy, patch or ignore (task)
-    concatMap((file) => ofTask(file, dirty.includes(file._filepath))),
+    concatMap((file) => ofTask(file, dirtyFiles.includes(file._filepath))),
   );
 
   tasks$.subscribe(
@@ -46,6 +54,36 @@ module.exports = async function command(args, options) {
     () => {
       Log.help();
       console.log('\nDone !');
+
+      // Log dependencies
+      const cmd = useYarn ? 'yarn add' : 'npm install';
+
+      let deps;
+
+      // Dependencies
+      deps = configs.reduce(
+        (acc, { dependencies = [] }) => acc.concat(dependencies),
+        [],
+      );
+
+      if (deps.length) {
+        Log.info('\nInstall dependencies:');
+        console.log(`${cmd} ${_uniq(deps).join(' ')}`);
+      }
+
+      // Dev dependencies
+      deps = configs.reduce(
+        (acc, { devDependencies = [] }) => acc.concat(devDependencies),
+        [],
+      );
+
+      if (deps.length) {
+        Log.info('\nInstall DEV dependencies:');
+        console.log(
+          `${cmd} ${useYarn ? '--dev' : '--save-dev'} ${_uniq(deps).join(' ')}`,
+        );
+      }
+
       process.exit(0);
     },
   );
@@ -71,11 +109,11 @@ function ofGist(id) {
 function withConfig(gist) {
   let config = {};
 
-  const yownFile = gist.files[YOWNFILE];
+  const file = gist.files[YOWNFILE];
 
-  if (yownFile) {
+  if (file) {
     try {
-      config = JSON.parse(yownFile.content);
+      config = JSON.parse(file.content);
     } catch (err) {
       Log.die('Error parsing yown.json', gist.id);
     }
@@ -165,21 +203,25 @@ function ofTask(file, ignore) {
   );
 }
 
-async function getDirty() {
-  const workingDir = process.cwd();
-
+async function getDirty(cwd) {
   // Git repo ?
-  const gitPath = path.resolve(workingDir, './.git');
+  const gitPath = path.resolve(cwd, './.git');
   const gitExists = await File.exists(gitPath);
 
   if (!gitExists) {
-    Log.die('No git repository detected', workingDir);
+    Log.die('No git repository detected', cwd);
   }
 
-  const files = await git.statusMatrix({ dir: workingDir, fs });
+  const files = await git.statusMatrix({ dir: cwd, fs });
 
   // https://isomorphic-git.org/docs/en/statusMatrix
   return files
     .filter(([, ...status]) => status.join(',') !== '1,1,1')
     .map(([filename]) => `./${filename}`);
+}
+
+async function isYarn(cwd) {
+  const yarnPath = path.resolve(cwd, './yarn.lock');
+
+  return File.exists(yarnPath);
 }
