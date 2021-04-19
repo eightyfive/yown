@@ -1,6 +1,6 @@
 const _uniq = require('lodash.uniq');
-const { from, of } = require('rxjs');
-const { concatMap, map, tap } = require('rxjs/operators');
+const { forkJoin, from, of } = require('rxjs');
+const { concatMap, switchMap, tap } = require('rxjs/operators');
 const path = require('path');
 const git = require('isomorphic-git');
 const fs = require('fs-extra');
@@ -25,21 +25,18 @@ module.exports = async function command(args, options) {
 
   const configs = [];
 
-  const tasks$ = from(args).pipe(
+  const tasks$ = of(args).pipe(
     // Normalize gist IDs
-    concatMap((arg) => ofGistId(arg)),
+    switchMap((args) => forkJoin(args.map((arg) => ofGistId(arg)))),
 
-    // Fetch gist
-    concatMap((id) => ofGist(id)),
+    // Fetch all gists
+    switchMap((ids) => forkJoin(ids.map((id) => ofGist(id)))),
 
-    // Parse gist config
-    map((gist) => withConfig(gist)),
+    // Stream gists
+    switchMap((gists) => from(gists)),
 
-    // Remember config
-    tap(([, config]) => configs.push(config)),
-
-    // Map gist files
-    concatMap(([gist, config]) => fromFiles(gist, config, options)),
+    // Stream gist files
+    concatMap((gist) => fromFiles(gist, options, configs)),
 
     // Prompt replace placeholder in file names
     concatMap((file) => promptPlaceholder(file)),
@@ -122,7 +119,20 @@ function withConfig(gist) {
   return [gist, config];
 }
 
-function fromFiles(gist, config, options) {
+function fromFiles(gist, options, configs) {
+  let config = {};
+
+  const yownFile = gist.files[YOWNFILE];
+
+  if (yownFile) {
+    try {
+      config = JSON.parse(yownFile.content);
+      configs.push(config);
+    } catch (err) {
+      Log.die('Error parsing yown.json', gist.id);
+    }
+  }
+
   const files = Object.values(gist.files)
     .map((file) => {
       file._filepath = Utils.getFilepath(
