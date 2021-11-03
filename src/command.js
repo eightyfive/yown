@@ -21,7 +21,10 @@ const prompts = {};
 module.exports = async function command(args, options) {
   const cwd = process.cwd();
 
-  const [dirtyFiles, useYarn] = await Promise.all([getDirty(cwd), isYarn(cwd)]);
+  const [modified, useYarn] = await Promise.all([
+    getModified(cwd),
+    isYarn(cwd),
+  ]);
 
   const yConfigs = {};
 
@@ -54,8 +57,20 @@ module.exports = async function command(args, options) {
     // Prompt replace placeholder in file names
     concatMap((file) => promptPlaceholder(file)),
 
+    // Filter un-modified files (git)
+    filter((file) => {
+      const filePath = file._filepath;
+      const isModified = modified[filePath];
+
+      if (isModified) {
+        Log.ignore(filePath);
+      }
+
+      return !isModified;
+    }),
+
     // Copy, patch or ignore (task)
-    concatMap((file) => ofTask(file, dirtyFiles.includes(file._filepath))),
+    concatMap((file) => ofTask(file)),
   );
 
   tasks$.subscribe(
@@ -174,13 +189,8 @@ function promptPlaceholder(file) {
   return from(replaced);
 }
 
-function ofTask(file, ignore) {
+function ofTask(file) {
   const filePath = file._filepath;
-
-  // Ignore file
-  if (ignore) {
-    return of(filePath).pipe(tap(() => Log.ignore(filePath)));
-  }
 
   // Patch file
   const isPatch = Utils.isPatch(file.filename);
@@ -197,7 +207,7 @@ function ofTask(file, ignore) {
   );
 }
 
-async function getDirty(cwd) {
+async function getModified(cwd) {
   // Git repo ?
   const gitPath = path.resolve(cwd, './.git');
   const gitExists = await File.exists(gitPath);
@@ -206,12 +216,19 @@ async function getDirty(cwd) {
     Log.die('No git repository detected', cwd);
   }
 
+  const modified = {};
+
   const files = await git.statusMatrix({ dir: cwd, fs });
 
   // https://isomorphic-git.org/docs/en/statusMatrix
-  return files
-    .filter(([, ...status]) => status.join(',') !== '1,1,1')
-    .map(([filename]) => `./${filename}`);
+  files
+    .filter(([, ...status]) => status.join(',') !== '1,1,1') // !== "unmodified"
+    .map(([filename]) => `./${filename}`)
+    .forEach((filePath) => {
+      modified[filePath] = true;
+    });
+
+  return modified;
 }
 
 async function isYarn(cwd) {
