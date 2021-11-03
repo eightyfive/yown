@@ -23,7 +23,7 @@ module.exports = async function command(args, options) {
 
   const [dirtyFiles, useYarn] = await Promise.all([getDirty(cwd), isYarn(cwd)]);
 
-  const configs = [];
+  const yConfigs = {};
 
   const tasks$ = of(args).pipe(
     // Normalize gist IDs
@@ -35,8 +35,21 @@ module.exports = async function command(args, options) {
     // Stream gists
     switchMap((gists) => from(gists)),
 
+    // Grab yown(s) config
+    tap((gist) => {
+      const yFile = gist.files[YOWNFILE];
+
+      if (yFile) {
+        try {
+          yConfigs[gist.id] = JSON.parse(yFile.content);
+        } catch (err) {
+          Log.die('Error parsing yown.json', gist.id);
+        }
+      }
+    }),
+
     // Stream gist files
-    concatMap((gist) => fromFiles(gist, options, configs)),
+    concatMap((gist) => fromFiles(gist, options, yConfigs[gist.id] || {})),
 
     // Prompt replace placeholder in file names
     concatMap((file) => promptPlaceholder(file)),
@@ -58,7 +71,7 @@ module.exports = async function command(args, options) {
       let deps;
 
       // Dependencies
-      deps = configs.reduce(
+      deps = Object.values(yConfigs).reduce(
         (acc, { dependencies = [] }) => acc.concat(dependencies),
         [],
       );
@@ -69,7 +82,7 @@ module.exports = async function command(args, options) {
       }
 
       // Dev dependencies
-      deps = configs.reduce(
+      deps = Object.values(yConfigs).reduce(
         (acc, { devDependencies = [] }) => acc.concat(devDependencies),
         [],
       );
@@ -103,24 +116,11 @@ function ofGist(id) {
   return from(Github.getGist(id));
 }
 
-function fromFiles(gist, options, configs) {
-  let config = {};
-
-  const yownFile = gist.files[YOWNFILE];
-
-  if (yownFile) {
-    try {
-      config = JSON.parse(yownFile.content);
-      configs.push(config);
-    } catch (err) {
-      Log.die('Error parsing yown.json', gist.id);
-    }
-  }
-
+function fromFiles(gist, options, yownConfig) {
   const files = Object.values(gist.files)
     .map((file) => {
       file._filepath = Utils.getFilepath(
-        options.dir || config.dir,
+        options.dir || yownConfig.dir,
         file.filename,
       );
 
