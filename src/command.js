@@ -49,7 +49,7 @@ module.exports = async function command(args, options) {
     }),
 
     // Stream gist files
-    concatMap((gist) => fromFiles(gist, options, yConfigs[gist.id] || {})),
+    concatMap((gist) => fromFiles(gist, options, yConfigs[gist.id])),
 
     // Prompt replace placeholder in file names
     concatMap((file) => promptPlaceholder(file)),
@@ -116,11 +116,11 @@ function ofGist(id) {
   return from(Github.getGist(id));
 }
 
-function fromFiles(gist, options, yownConfig) {
+function fromFiles(gist, options, yConfig = {}) {
   const files = Object.values(gist.files)
     .map((file) => {
       file._filepath = Utils.getFilepath(
-        options.dir || yownConfig.dir,
+        options.dir || yConfig.dir,
         file.filename,
       );
 
