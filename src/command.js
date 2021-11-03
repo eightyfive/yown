@@ -103,22 +103,6 @@ function ofGist(id) {
   return from(Github.getGist(id));
 }
 
-function withConfig(gist) {
-  let config = {};
-
-  const file = gist.files[YOWNFILE];
-
-  if (file) {
-    try {
-      config = JSON.parse(file.content);
-    } catch (err) {
-      Log.die('Error parsing yown.json', gist.id);
-    }
-  }
-
-  return [gist, config];
-}
-
 function fromFiles(gist, options, configs) {
   let config = {};
 
