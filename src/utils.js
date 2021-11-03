@@ -4,15 +4,10 @@ const rePatch = /^([\w-]+\.[a-z]{2,4})\.patch$/;
 const reAppend = /^>>([\w-]+\.[a-z]{2,4})$/;
 const rePrepend = /^<<([\w-]+\.[a-z]{2,4})$/;
 
-function getFilePath(raw, dir) {
-  let filePath = raw.split('\\');
-  let fileName = filePath.pop();
+function getFilePath(yPath, dir) {
+  const filePath = yPath.split('\\');
 
-  let isPatch = rePatch.exec(fileName);
-
-  if (isPatch) {
-    fileName = isPatch[1];
-  }
+  const fileName = getFileName(filePath.pop());
 
   filePath.push(fileName);
 
@@ -23,6 +18,33 @@ function getFilePath(raw, dir) {
   }
 
   return `./${filePath.join('/')}`;
+}
+
+function getFileName(fileName) {
+  let res;
+
+  // Is patch ?
+  res = rePatch.exec(fileName);
+
+  if (res) {
+    return res[1];
+  }
+
+  // Is append ?
+  res = reAppend.exec(fileName);
+
+  if (res) {
+    return res[1];
+  }
+
+  // Is prepend ?
+  res = rePrepend.exec(fileName);
+
+  if (res) {
+    return res[1];
+  }
+
+  return fileName;
 }
 
 module.exports = {
