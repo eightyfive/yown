@@ -4,25 +4,25 @@ const Log = require('./logger');
 const o = Object;
 const rePatch = /^([\w-\\]+\.[a-z]{2,4})\.patch$/;
 
-function getFilepath(dir, raw) {
-  let filepath = raw.split('\\');
-  let filename = filepath.pop();
+function getFilePath(dir, raw) {
+  let filePath = raw.split('\\');
+  let fileName = filePath.pop();
 
-  let isPatch = rePatch.exec(filename);
+  let isPatch = rePatch.exec(fileName);
 
   if (isPatch) {
-    filename = isPatch[1];
+    fileName = isPatch[1];
   }
 
-  filepath.push(filename);
+  filePath.push(fileName);
 
   const dirName = trim(dir, './');
 
   if (dirName) {
-    filepath.unshift(dirName);
+    filePath.unshift(dirName);
   }
 
-  return `./${filepath.join('/')}`;
+  return `./${filePath.join('/')}`;
 }
 
 module.exports = {
@@ -30,9 +30,17 @@ module.exports = {
     return arg.indexOf('@') === 0 && arg.split('/').length === 2;
   },
 
-  isPatch(filename) {
-    return rePatch.test(filename.split('\\').pop());
+  isPatch(fileName) {
+    return rePatch.test(fileName.split('\\').pop());
   },
 
-  getFilepath,
+  isAppend(fileName) {
+    return rePatch.test(fileName.split('\\').pop());
+  },
+
+  isPrepend(fileName) {
+    return rePatch.test(fileName.split('\\').pop());
+  },
+
+  getFilePath,
 };

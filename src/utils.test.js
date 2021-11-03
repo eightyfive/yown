@@ -1,6 +1,6 @@
 const Utils = require('./utils');
 
-const fp = Utils.getFilepath;
+const fp = Utils.getFilePath;
 
 describe('Filepath', () => {
   test('Simple', () => {
