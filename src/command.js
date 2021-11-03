@@ -135,8 +135,8 @@ function fromFiles(gist, options, yConfig = {}) {
   const files = Object.values(gist.files)
     .map((file) => {
       file._filepath = Utils.getFilePath(
-        options.dir || yConfig.dir,
         file.filename,
+        options.dir || yConfig.dir,
       );
 
       return file;

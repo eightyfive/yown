@@ -1,10 +1,10 @@
 const trim = require('lodash.trim');
-const Log = require('./logger');
 
-const o = Object;
-const rePatch = /^([\w-\\]+\.[a-z]{2,4})\.patch$/;
+const rePatch = /^([\w-]+\.[a-z]{2,4})\.patch$/;
+const reAppend = /^>>([\w-]+\.[a-z]{2,4})$/;
+const rePrepend = /^<<([\w-]+\.[a-z]{2,4})$/;
 
-function getFilePath(dir, raw) {
+function getFilePath(raw, dir) {
   let filePath = raw.split('\\');
   let fileName = filePath.pop();
 
@@ -35,11 +35,11 @@ module.exports = {
   },
 
   isAppend(fileName) {
-    return rePatch.test(fileName.split('\\').pop());
+    return reAppend.test(fileName.split('\\').pop());
   },
 
   isPrepend(fileName) {
-    return rePatch.test(fileName.split('\\').pop());
+    return rePrepend.test(fileName.split('\\').pop());
   },
 
   getFilePath,
