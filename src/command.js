@@ -69,7 +69,7 @@ module.exports = async function command(args, options) {
       return !isModified;
     }),
 
-    // Copy, patch or ignore (task)
+    // Copy, delete, patch (task)
     concatMap((file) => ofTask(file)),
   );
 
@@ -199,6 +199,11 @@ function ofTask(file) {
     return from(File.patch(file.content, filePath)).pipe(
       tap(() => Log.patch(filePath)),
     );
+  }
+
+  // Delete file
+  if (!file.content) {
+    return from(File.delete(filePath)).pipe(tap(() => Log.delete(filePath)));
   }
 
   // Copy file

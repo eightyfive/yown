@@ -10,6 +10,10 @@ module.exports = {
     return fs.outputFile(dest, content);
   },
 
+  delete(path) {
+    return fs.unlink(path);
+  },
+
   patch(content, dest) {
     return fs
       .pathExists(dest)

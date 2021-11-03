@@ -7,28 +7,35 @@ const logs = [];
 let patched = false;
 let copied = false;
 let ignored = false;
+let deleted = false;
 
 module.exports = {
   gist(id, message) {
     log(id.white + ': ' + message.grey);
   },
 
-  patch(filepath) {
+  patch(filePath) {
     patched = true;
 
-    logs.push('P '.yellow + filepath.grey);
+    logs.push('P '.yellow + filePath.grey);
   },
 
-  copy(filepath) {
+  copy(filePath) {
     copied = true;
 
-    logs.push('C '.green + filepath.grey);
+    logs.push('C '.green + filePath.grey);
   },
 
-  ignore(filepath) {
+  ignore(filePath) {
     ignored = true;
 
-    logs.push('I '.red + filepath.grey);
+    logs.push('I '.orange + filePath.grey);
+  },
+
+  delete(filePath) {
+    deleted = true;
+
+    logs.push('D '.red + filePath.grey);
   },
 
   info(message) {
@@ -60,7 +67,10 @@ module.exports = {
       log('P '.yellow + '= Patched');
     }
     if (ignored) {
-      log('I '.red + '= Ignored (not clean, commit changes)');
+      log('I '.orange + '= Ignored (not clean, commit changes)');
+    }
+    if (deleted) {
+      log('D '.red + '= Deleted');
     }
   },
 };
