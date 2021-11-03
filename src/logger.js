@@ -4,7 +4,7 @@ const { log, error: logError } = console;
 
 const logs = [];
 
-let patched = false;
+let modified = false;
 let copied = false;
 let ignored = false;
 let deleted = false;
@@ -14,10 +14,10 @@ module.exports = {
     log(id.white + ': ' + message.grey);
   },
 
-  patch(filePath) {
-    patched = true;
+  modified(filePath) {
+    modified = true;
 
-    logs.push('P '.yellow + filePath.grey);
+    logs.push('M '.yellow + filePath.grey);
   },
 
   copy(filePath) {
@@ -63,8 +63,8 @@ module.exports = {
     if (copied) {
       log('C '.green + '= Copied');
     }
-    if (patched) {
-      log('P '.yellow + '= Patched');
+    if (modified) {
+      log('M '.yellow + '= Modified');
     }
     if (ignored) {
       log('I '.orange + '= Ignored (not clean, commit changes)');

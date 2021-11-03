@@ -22,6 +22,7 @@
     "lodash.trim": "^4.5.1",
     "lodash.uniq": "^4.5.0",
     "node-machine-id": "^1.1.12",
+    "prepend-file": "^2.0.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
     "rxjs": "^6.6.3",

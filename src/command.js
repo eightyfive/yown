@@ -192,16 +192,28 @@ function promptPlaceholder(file) {
 function ofTask(file) {
   const filePath = file._filepath;
 
-  // Patch file
-  const isPatch = Utils.isPatch(file.filename);
-
-  if (isPatch) {
+  // Patch file ?
+  if (Utils.isPatch(file.filename)) {
     return from(File.patch(file.content, filePath)).pipe(
-      tap(() => Log.patch(filePath)),
+      tap(() => Log.modified(filePath)),
     );
   }
 
-  // Delete file
+  // Append file ?
+  if (Utils.isAppend(file.filename)) {
+    return from(File.append(file.content, filePath)).pipe(
+      tap(() => Log.modified(filePath)),
+    );
+  }
+
+  // Prepend file ?
+  if (Utils.isPrepend(file.filename)) {
+    return from(File.prepend(file.content, filePath)).pipe(
+      tap(() => Log.modified(filePath)),
+    );
+  }
+
+  // Delete file ?
   if (!file.content) {
     return from(File.delete(filePath)).pipe(tap(() => Log.delete(filePath)));
   }
