@@ -69,7 +69,7 @@ module.exports = async function command(args, options) {
       return !isModified;
     }),
 
-    // Copy, delete, patch (task)
+    // Copy, delete (task)
     concatMap((file) => ofTask(file)),
   );
 
@@ -191,13 +191,6 @@ function promptPlaceholder(file) {
 
 function ofTask(file) {
   const filePath = file._filepath;
-
-  // Patch file ?
-  if (Utils.isPatch(file.filename)) {
-    return from(File.patch(file.content, filePath)).pipe(
-      tap(() => Log.modified(filePath)),
-    );
-  }
 
   // Append file ?
   if (Utils.isAppend(file.filename)) {

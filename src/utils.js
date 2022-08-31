@@ -1,6 +1,5 @@
 const trim = require('lodash.trim');
 
-const rePatch = /^([\w-]+\.[a-z]{2,4})\.patch$/;
 const reAppend = /^>>([\w-]+\.[a-z]{2,4})$/;
 const rePrepend = /^<<([\w-]+\.[a-z]{2,4})$/;
 
@@ -23,13 +22,6 @@ function getFilePath(yPath, dir) {
 function getFileName(fileName) {
   let res;
 
-  // Is patch ?
-  res = rePatch.exec(fileName);
-
-  if (res) {
-    return res[1];
-  }
-
   // Is append ?
   res = reAppend.exec(fileName);
 
@@ -50,10 +42,6 @@ function getFileName(fileName) {
 module.exports = {
   isName(arg) {
     return arg.indexOf('@') === 0 && arg.split('/').length === 2;
-  },
-
-  isPatch(fileName) {
-    return rePatch.test(fileName.split('\\').pop());
   },
 
   isAppend(fileName) {

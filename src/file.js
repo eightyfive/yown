@@ -1,5 +1,4 @@
 const fs = require('fs-extra');
-const diff = require('diff');
 const prependFile = require('prepend-file');
 
 module.exports = {
@@ -21,16 +20,5 @@ module.exports = {
 
   delete(path) {
     return fs.unlink(path);
-  },
-
-  patch(content, dest) {
-    return fs
-      .pathExists(dest)
-      .then((exists) =>
-        exists ? fs.readFile(dest, 'utf8') : Promise.resolve(''),
-      )
-      .then((original) =>
-        fs.outputFile(dest, diff.applyPatch(original, content)),
-      );
   },
 };
